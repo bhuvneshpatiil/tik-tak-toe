@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tic Tac Toe Game Menu</title>
+  
+  <!-- PWA Meta Tags -->
+  <meta name="theme-color" content="#667eea">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Tic Tac Toe">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="description" content="Play Tic Tac Toe with friends offline, against computer, or online multiplayer">
+  
+  <!-- Manifest -->
+  <link rel="manifest" href="/manifest.json">
+  
+  <!-- Icons -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/icons/icon-16x16.png">
+  <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+  
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      color: white;
+    }
+    h1 {
+      font-size: 3rem;
+      margin-bottom: 10px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    .subtitle {
+      font-size: 1.2rem;
+      margin-bottom: 50px;
+      opacity: 0.9;
+    }
+    .game-modes {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      width: 100%;
+      max-width: 400px;
+    }
+    .mode-card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 15px;
+      padding: 30px;
+      text-align: center;
+      transition: transform 0.3s, box-shadow 0.3s;
+      cursor: pointer;
+      text-decoration: none;
+      color: white;
+    }
+    .mode-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      background: rgba(255, 255, 255, 0.2);
+    }
+    .mode-card h2 {
+      font-size: 1.8rem;
+      margin: 0 0 10px 0;
+    }
+    .mode-card p {
+      font-size: 1rem;
+      margin: 0;
+      opacity: 0.9;
+    }
+    .emoji {
+      font-size: 2.5rem;
+      margin-bottom: 15px;
+      display: block;
+    }
+    .credit-popup {
+      margin-top: 20px;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 15px;
+      text-align: center;
+    }
+    
+    /* Install prompt styles */
+    .install-prompt {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 15px 20px;
+      border-radius: 10px;
+      display: none;
+      z-index: 1000;
+      backdrop-filter: blur(10px);
+    }
+    .install-prompt button {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 5px;
+      margin-left: 10px;
+      cursor: pointer;
+    }
+    .install-prompt button:hover {
+      background: #5a6fd8;
+    }
+    
+    .install-guide-link {
+      margin-top: 15px;
+      text-align: center;
+    }
+    .install-guide-link a {
+      color: #ffd700;
+      text-decoration: none;
+      font-size: 0.9rem;
+      opacity: 0.8;
+      transition: opacity 0.3s;
+    }
+    .install-guide-link a:hover {
+      opacity: 1;
+    }
+
+    /* Smart Chatbot Widget styles */
+    .chatbot-widget {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      width: 350px;
+      max-width: 90vw;
+      background: rgba(30, 30, 60, 0.98);
+      border-radius: 20px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+      z-index: 2000;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .chatbot-header {
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 1rem;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .chatbot-close {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+    .chatbot-messages {
+      flex: 1;
+      padding: 1rem;
+      overflow-y: auto;
+      max-height: 300px;
+    }
+    .chatbot-input-area {
+      display: flex;
+      border-top: 1px solid #444;
+      background: #222;
+    }
+    .chatbot-input {
+      flex: 1;
+      border: none;
+      padding: 0.8rem;
+      font-size: 1rem;
+      background: #222;
+      color: white;
+      border-radius: 0 0 0 20px;
+    }
+    .chatbot-send {
+      background: #ffd700;
+      color: #333;
+      border: none;
+      padding: 0 1.2rem;
+      font-size: 1.2rem;
+      cursor: pointer;
+      border-radius: 0 0 20px 0;
+    }
+    .chatbot-bubble {
+      margin-bottom: 0.7rem;
+      padding: 0.7rem 1rem;
+      border-radius: 15px;
+      max-width: 80%;
+      word-break: break-word;
+    }
+    .chatbot-bubble.user {
+      background: #ffd700;
+      color: #333;
+      margin-left: auto;
+    }
+    .chatbot-bubble.bot {
+      background: #667eea;
+      color: white;
+      margin-right: auto;
+    }
+    .chatbot-open-btn {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: linear-gradient(135deg, #667eea 0%, #ffd700 100%);
+      color: #333;
+      border: none;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      font-size: 2rem;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+      cursor: pointer;
+      z-index: 2100;
+    }
+    .typing-indicator {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+    .typing-indicator span {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.7);
+      animation: typing 1.4s infinite ease-in-out;
+    }
+    .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+    .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+    @keyframes typing {
+      0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+      40% { transform: scale(1); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Tic Tac Toe</h1>
+  <p class="subtitle">Choose your game mode</p>
+  
+  <div class="game-modes">
+    <a href="offline.html" class="mode-card">
+      <span class="emoji">🎮</span>
+      <h2>Offline Mode</h2>
+      <p>Play with a friend on the same device</p>
+    </a>
+    
+    <a href="computer.html" class="mode-card">
+      <span class="emoji">🤖</span>
+      <h2>Computer Mode</h2>
+      <p>Play against the computer AI</p>
+    </a>
+    
+    <a href="online.html" class="mode-card">
+      <span class="emoji">🌐</span>
+      <h2>Online Mode</h2>
+      <p>Play with friends over the internet</p>
+    </a>
+  </div>
+  
+  <div class="credit-popup">
+    <p>Game is made by bhuvnesh</p>
+  </div>
+  
+  <div class="install-guide-link">
+    <a href="install-guide.html">📱 How to install on Android</a>
+  </div>
+  
+  <!-- Install prompt -->
+  <div id="installPrompt" class="install-prompt">
+    <span>Install Tic Tac Toe for quick access!</span>
+    <button id="installBtn">Install</button>
+    <button id="dismissBtn">Dismiss</button>
+  </div>
+
+  <!-- Smart Chatbot Widget -->
+  <button class="chatbot-open-btn" id="openChatbotBtn" title="Chat with AI Assistant!">🤖</button>
+  <div class="chatbot-widget" id="chatbotWidget">
+    <div class="chatbot-header">
+      <span>AI Assistant</span>
+      <button class="chatbot-close" id="closeChatbotBtn">✖</button>
+    </div>
+    <div class="chatbot-messages" id="chatbotMessages"></div>
+    <form class="chatbot-input-area" id="chatbotForm" autocomplete="off">
+      <input type="text" class="chatbot-input" id="chatbotInput" placeholder="Ask me anything - games, knowledge, advice..." required />
+      <button type="submit" class="chatbot-send">➤</button>
+    </form>
+  </div>
+
+  <script>
+    // Include API Configuration
+    const DEEPSEEK_API_KEY = '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';
+    const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
+
+    // API call function
+    async function callDeepSeekAPI(userMessage, conversationHistory = []) {
+      try {
+        const response = await fetch(DEEPSEEK_API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
+          },
+          body: JSON.stringify({
+            model: 'deepseek-chat',
+            messages: [
+              {
+                role: 'system',
+                content: `You are a helpful and intelligent AI assistant. You can answer questions about:
+
+                **Tic Tac Toe Game:**
+                - Game rules and how to play
+                - Installation instructions for Android
+                - Game modes (offline, computer, online)
+                - Technical support for the game
+                - Information about the game creator (bhuvnesh)
+
+                **General Knowledge:**
+                - Science, technology, history, geography
+                - Mathematics, calculations, problem solving
+                - Current events, news, and trends
+                - Literature, arts, and culture
+                - Health, fitness, and lifestyle advice
+                - Programming and technical questions
+                - Business, finance, and economics
+                - Entertainment, movies, music, and games
+                - Travel, food, and cooking
+                - Philosophy, psychology, and self-help
+
+                **Conversation:**
+                - Casual chat and friendly conversation
+                - Jokes, riddles, and entertainment
+                - Personal advice and motivation
+                - Language learning and translation help
+
+                Be friendly, helpful, knowledgeable, and engaging. Provide accurate, informative, and well-structured responses. If you're not sure about something, say so honestly. Always be respectful and appropriate in your responses.`
+              },
+              ...conversationHistory,
+              {
+                role: 'user',
+                content: userMessage
+              }
+            ],
+            max_tokens: 800,
+            temperature: 0.7
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`API call failed: ${response.status}`);
+        }
+
+        const data = await response.json();
+        return data.choices[0].message.content;
+      } catch (error) {
+        console.error('DeepSeek API Error:', error);
+        return 'Sorry, I\'m having trouble connecting right now. Please try again later! I can help you with game questions, general knowledge, calculations, advice, and much more.';
+      }
+    }
+
+    // Service Worker Registration
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(registration => {
+            console.log('SW registered: ', registration);
+          })
+          .catch(registrationError => {
+            console.log('SW registration failed: ', registrationError);
+          });
+      });
+    }
+
+    // PWA Install Prompt
+    let deferredPrompt;
+    const installPrompt = document.getElementById('installPrompt');
+    const installBtn = document.getElementById('installBtn');
+    const dismissBtn = document.getElementById('dismissBtn');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      installPrompt.style.display = 'block';
+    });
+
+    installBtn.addEventListener('click', () => {
+      installPrompt.style.display = 'none';
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+          console.log('User accepted the install prompt');
+        } else {
+          console.log('User dismissed the install prompt');
+        }
+        deferredPrompt = null;
+      });
+    });
+
+    dismissBtn.addEventListener('click', () => {
+      installPrompt.style.display = 'none';
+    });
+
+    // Hide install prompt if app is already installed
+    window.addEventListener('appinstalled', () => {
+      installPrompt.style.display = 'none';
+      deferredPrompt = null;
+    });
+
+    // Smart Chatbot with DeepSeek API
+    const openBtn = document.getElementById('openChatbotBtn');
+    const closeBtn = document.getElementById('closeChatbotBtn');
+    const widget = document.getElementById('chatbotWidget');
+    const messages = document.getElementById('chatbotMessages');
+    const form = document.getElementById('chatbotForm');
+    const input = document.getElementById('chatbotInput');
+    
+    // Conversation history for context
+    let conversationHistory = [];
+    let isProcessing = false;
+
+    openBtn.onclick = () => {
+      widget.style.display = 'flex';
+      openBtn.style.display = 'none';
+      setTimeout(() => input.focus(), 200);
+    };
+    
+    closeBtn.onclick = () => {
+      widget.style.display = 'none';
+      openBtn.style.display = 'block';
+    };
+
+    function addMessage(text, sender, isLoading = false) {
+      const bubble = document.createElement('div');
+      bubble.className = 'chatbot-bubble ' + sender;
+      
+      if (isLoading) {
+        bubble.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
+        bubble.id = 'typing-bubble';
+      } else {
+        bubble.textContent = text;
+      }
+      
+      messages.appendChild(bubble);
+      messages.scrollTop = messages.scrollHeight;
+      return bubble;
+    }
+
+    function removeTypingIndicator() {
+      const typingBubble = document.getElementById('typing-bubble');
+      if (typingBubble) {
+        typingBubble.remove();
+      }
+    }
+
+    // Initial greeting
+    addMessage("Hi! I'm your AI assistant powered by DeepSeek. I can help you with anything - from Tic Tac Toe game questions to general knowledge, calculations, advice, jokes, and much more! Ask me anything! 🤖", 'bot');
+
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      
+      if (isProcessing) return;
+      
+      const userMsg = input.value.trim();
+      if (!userMsg) return;
+      
+      // Add user message
+      addMessage(userMsg, 'user');
+      input.value = '';
+      
+      // Show typing indicator
+      addMessage('', 'bot', true);
+      
+      isProcessing = true;
+      
+      try {
+        // Add user message to conversation history
+        conversationHistory.push({
+          role: 'user',
+          content: userMsg
+        });
+        
+        // Call DeepSeek API
+        const botResponse = await callDeepSeekAPI(userMsg, conversationHistory);
+        
+        // Remove typing indicator
+        removeTypingIndicator();
+        
+        // Add bot response
+        addMessage(botResponse, 'bot');
+        
+        // Add bot response to conversation history
+        conversationHistory.push({
+          role: 'assistant',
+          content: botResponse
+        });
+        
+        // Keep conversation history manageable (last 10 messages)
+        if (conversationHistory.length > 10) {
+          conversationHistory = conversationHistory.slice(-10);
+        }
+        
+      } catch (error) {
+        console.error('Chatbot error:', error);
+        removeTypingIndicator();
+        addMessage("Sorry, I'm having trouble connecting right now. Please try again later!", 'bot');
+      } finally {
+        isProcessing = false;
+      }
+    };
+
+    // Handle Enter key
+    input.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        form.dispatchEvent(new Event('submit'));
+      }
+    });
+  </script>
+</body>
+</html> 

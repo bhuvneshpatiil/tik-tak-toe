@@ -1,0 +1,27 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="512" height="512" fill="url(#grad)" rx="50"/>
+  
+  <!-- Tic Tac Toe Grid -->
+  <g stroke="white" stroke-width="8" fill="none">
+    <!-- Vertical lines -->
+    <line x1="170" y1="50" x2="170" y2="462"/>
+    <line x1="342" y1="50" x2="342" y2="462"/>
+    
+    <!-- Horizontal lines -->
+    <line x1="50" y1="170" x2="462" y2="170"/>
+    <line x1="50" y1="342" x2="462" y2="342"/>
+  </g>
+  
+  <!-- X's and O's -->
+  <text x="85" y="85" font-family="Arial, sans-serif" font-size="80" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="middle">X</text>
+  <text x="256" y="256" font-family="Arial, sans-serif" font-size="80" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="middle">O</text>
+  <text x="427" y="427" font-family="Arial, sans-serif" font-size="80" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="middle">X</text>
+</svg> 

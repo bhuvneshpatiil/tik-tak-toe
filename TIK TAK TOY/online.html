@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Online Tic Tac Toe</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      color: white;
+    }
+    h1 {
+      margin-bottom: 10px;
+      color: #333;
+    }
+    .back-btn {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      padding: 10px 20px;
+      background: #6c757d;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 1rem;
+    }
+    .back-btn:hover {
+      background: #5a6268;
+    }
+    #room-controls {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    #room-id {
+      padding: 8px;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      margin-right: 10px;
+    }
+    #join-btn {
+      padding: 8px 20px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 5px;
+      background: #28a745;
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    #join-btn:hover {
+      background: #218838;
+    }
+    #game {
+      display: grid;
+      grid-template-columns: repeat(3, 80px);
+      grid-template-rows: repeat(3, 80px);
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .cell {
+      width: 80px;
+      height: 80px;
+      background: #fff;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      transition: background 0.2s;
+    }
+    .cell:hover {
+      background: #e0e0e0;
+    }
+    .cell.disabled {
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+    #status {
+      font-size: 1.2rem;
+      margin-bottom: 15px;
+      min-height: 1.5em;
+      color: #333;
+    }
+    #reset {
+      padding: 8px 20px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 5px;
+      background: #007bff;
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    #reset:hover {
+      background: #0056b3;
+    }
+    .congrats-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .congrats-message {
+      background: white;
+      padding: 40px;
+      border-radius: 15px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+    .congrats-message h2 {
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: #007bff;
+      margin: 0 0 20px 0;
+    }
+    .congrats-message p {
+      font-size: 1.5rem;
+      margin: 0 0 20px 0;
+    }
+    .close-btn {
+      padding: 10px 25px;
+      font-size: 1.1rem;
+      border: none;
+      border-radius: 5px;
+      background: #007bff;
+      color: white;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .close-btn:hover {
+      background: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <a href="index.html" class="back-btn">← Back to Menu</a>
+  
+  <h1>🌐 Online Tic Tac Toe</h1>
+  <p>Play with friends over the internet</p>
+  
+  <div id="room-controls">
+    <input type="text" id="room-id" placeholder="Enter Room ID" value="room1">
+    <button id="join-btn">Join Room</button>
+  </div>
+  
+  <div id="status"></div>
+  <div id="game"></div>
+  <button id="reset">Reset Game</button>
+  
+  <script>
+    const gameContainer = document.getElementById('game');
+    const statusDiv = document.getElementById('status');
+    const resetBtn = document.getElementById('reset');
+    const roomIdInput = document.getElementById('room-id');
+    const joinBtn = document.getElementById('join-btn');
+    
+    let ws;
+    let board = Array(9).fill('');
+    let currentPlayer = 'X';
+    let gameActive = true;
+    let myPlayerId = null;
+    let isConnected = false;
+
+    function connectToServer() {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const host = window.location.hostname;
+      const port = '3000';
+      ws = new WebSocket(`${protocol}//${host}:${port}`);
+      
+      ws.onopen = () => {
+        console.log('Connected to server');
+        isConnected = true;
+        setStatus('Connected! Enter a room ID and click Join Room');
+      };
+      
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        handleServerMessage(data);
+      };
+      
+      ws.onclose = () => {
+        console.log('Disconnected from server');
+        isConnected = false;
+        setStatus('Disconnected from server. Please refresh the page.');
+      };
+      
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        setStatus('Connection error. Please check if the server is running.');
+      };
+    }
+
+    function handleServerMessage(data) {
+      switch (data.type) {
+        case 'joined_room':
+          myPlayerId = data.playerId;
+          setStatus(`Joined room ${data.roomId} as Player ${data.playerId}`);
+          break;
+          
+        case 'game_state':
+          board = data.board;
+          currentPlayer = data.currentPlayer;
+          gameActive = data.gameActive;
+          renderBoard();
+          updateStatus();
+          break;
+          
+        case 'game_over':
+          board = data.board;
+          gameActive = false;
+          renderBoard();
+          if (data.winner) {
+            setStatus(`Player ${data.winner} wins!`);
+            showCongratulations(data.winner);
+          } else {
+            setStatus("It's a draw!");
+            showCongratulations(null);
+          }
+          break;
+          
+        case 'player_disconnected':
+          setStatus(data.message);
+          gameActive = false;
+          break;
+          
+        case 'error':
+          setStatus(`Error: ${data.message}`);
+          break;
+      }
+    }
+
+    function joinRoom() {
+      if (!isConnected) {
+        setStatus('Not connected to server');
+        return;
+      }
+      
+      const roomId = roomIdInput.value.trim();
+      if (!roomId) {
+        setStatus('Please enter a room ID');
+        return;
+      }
+      
+      ws.send(JSON.stringify({
+        type: 'join_room',
+        roomId: roomId
+      }));
+    }
+
+    function handleCellClick(idx) {
+      if (!isConnected || !gameActive || board[idx] || currentPlayer !== myPlayerId) return;
+      
+      ws.send(JSON.stringify({
+        type: 'make_move',
+        roomId: roomIdInput.value.trim(),
+        cellIndex: idx
+      }));
+    }
+
+    function resetGame() {
+      if (!isConnected) return;
+      
+      ws.send(JSON.stringify({
+        type: 'reset_game',
+        roomId: roomIdInput.value.trim()
+      }));
+    }
+
+    function renderBoard() {
+      gameContainer.innerHTML = '';
+      board.forEach((cell, idx) => {
+        const cellDiv = document.createElement('div');
+        cellDiv.className = 'cell';
+        cellDiv.textContent = cell;
+        
+        if (!gameActive || cell || currentPlayer !== myPlayerId) {
+          cellDiv.classList.add('disabled');
+        }
+        
+        cellDiv.addEventListener('click', () => handleCellClick(idx));
+        gameContainer.appendChild(cellDiv);
+      });
+    }
+
+    function updateStatus() {
+      if (!isConnected) {
+        setStatus('Not connected to server');
+        return;
+      }
+      
+      if (!myPlayerId) {
+        setStatus('Waiting to join room...');
+        return;
+      }
+      
+      if (!gameActive) {
+        setStatus('Game over');
+        return;
+      }
+      
+      if (currentPlayer === myPlayerId) {
+        setStatus('Your turn');
+      } else {
+        setStatus("Opponent's turn");
+      }
+    }
+
+    function setStatus(msg) {
+      statusDiv.textContent = msg;
+    }
+
+    function showCongratulations(winner) {
+      const overlay = document.createElement('div');
+      overlay.className = 'congrats-overlay';
+
+      const message = document.createElement('div');
+      message.className = 'congrats-message';
+
+      const h2 = document.createElement('h2');
+      h2.textContent = 'Congratulations!';
+
+      const p = document.createElement('p');
+      if (winner) {
+        p.textContent = `Player ${winner} wins!`;
+      } else {
+        p.textContent = "It's a draw!";
+      }
+
+      const closeBtn = document.createElement('button');
+      closeBtn.className = 'close-btn';
+      closeBtn.textContent = 'Close';
+      closeBtn.addEventListener('click', () => {
+        document.body.removeChild(overlay);
+        resetGame();
+      });
+
+      message.appendChild(h2);
+      message.appendChild(p);
+      message.appendChild(closeBtn);
+
+      overlay.appendChild(message);
+      document.body.appendChild(overlay);
+    }
+
+    // Event listeners
+    joinBtn.addEventListener('click', joinRoom);
+    resetBtn.addEventListener('click', resetGame);
+    
+    // Connect to server on page load
+    connectToServer();
+    
+    // Initial render
+    renderBoard();
+    setStatus('Connecting to server...');
+  </script>
+</body>
+</html> 
